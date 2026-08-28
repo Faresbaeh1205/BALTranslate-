@@ -2,5 +2,5 @@ fastapi
 uvicorn
 gTTS
 deep-translator
-google-generativeai
+google-genai
 pydantic
