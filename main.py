@@ -3,15 +3,9 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
 from gtts import gTTS
 from deep_translator import GoogleTranslator
-import google.generativeai as genai
 import io
-import os
 
-app = FastAPI(title="BALTranslate Pro & BalIA")
-
-# Configuration de la clé API avec la bibliothèque google-generativeai
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AQ.Ab8RN6IsHJrC90Pxq5Ovn_T-s5TM4IGFmyWPyKQl0qBMzXRl1w")
-genai.configure(api_key=GEMINI_API_KEY)
+app = FastAPI(title="BALTranslate Pro")
 
 LANGUAGES = {
     "auto": "Détection automatique", "af": "Afrikaans", "sq": "Albanais", "am": "Amharique", 
@@ -44,10 +38,6 @@ class TranslationRequest(BaseModel):
     source_lang: str = "auto"
     target_lang: str
 
-class AIRequest(BaseModel):
-    prompt: str
-    context_text: str = ""
-
 @app.post("/translate")
 def translate_text(req: TranslationRequest):
     if not req.text.strip():
@@ -72,22 +62,6 @@ def text_to_speech(text: str, lang: str = "fr"):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/ai-chat")
-def ai_chat(req: AIRequest):
-    if not req.prompt.strip():
-        raise HTTPException(status_code=400, detail="Question vide")
-        
-    full_prompt = req.prompt
-    if req.context_text.strip():
-        full_prompt = f"Contexte scanné / texte actuel :\n{req.context_text}\n\nQuestion de l'utilisateur : {req.prompt}"
-
-    try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(full_prompt)
-        return {"response": response.text}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur BalIA: {str(e)}")
-
 @app.get("/", response_class=HTMLResponse)
 def get_web_interface():
     options_html = "".join([f'<option value="{k}">{v}</option>' for k, v in LANGUAGES.items()])
@@ -98,8 +72,9 @@ def get_web_interface():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BALTranslate Pro & BalIA</title>
+    <title>BALTranslate Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {{
             --bg: #030712;
@@ -147,7 +122,7 @@ def get_web_interface():
 
         .container {{
             width: 100%;
-            max-width: 500px;
+            max-width: 520px;
             background: var(--card-bg);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
@@ -158,7 +133,7 @@ def get_web_interface():
         }}
 
         .header h1 {{
-            font-size: 1.8rem;
+            font-size: 1.9rem;
             margin: 0 0 4px 0;
             text-align: center;
             background: linear-gradient(135deg, #c084fc, #38bdf8);
@@ -167,41 +142,11 @@ def get_web_interface():
             font-weight: 900;
             letter-spacing: -0.5px;
         }}
-        .subtitle {{ text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 18px; }}
-        
-        .nav-tabs {{
-            display: flex;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 4px;
-            border-radius: 16px;
-            gap: 6px;
-            margin-bottom: 18px;
-            border: 1px solid var(--border);
-        }}
-        .tab-btn {{
-            flex: 1;
-            padding: 12px;
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 0.88rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }}
-        .tab-btn.active {{
-            background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
-            color: #fff;
-            box-shadow: var(--neon-glow);
-        }}
-
-        .section {{ display: none; }}
-        .section.active {{ display: block; }}
+        .subtitle {{ text-align: center; color: var(--text-muted); font-size: 0.82rem; margin-bottom: 18px; }}
 
         label {{ display: block; font-size: 0.75rem; font-weight: 700; color: #c084fc; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }}
         
-        textarea, input[type="text"], select {{
+        textarea, select {{
             width: 100%;
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border);
@@ -212,14 +157,20 @@ def get_web_interface():
             outline: none;
             transition: border-color 0.3s;
         }}
-        textarea {{ height: 100px; resize: none; }}
-        textarea:focus, select:focus, input:focus {{ border-color: var(--neon-purple); box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); }}
+        textarea {{ height: 95px; resize: none; }}
+        textarea:focus, select:focus {{ border-color: var(--neon-purple); box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); }}
 
         .controls {{ display: flex; gap: 8px; margin: 10px 0; }}
 
-        .file-upload-btn {{
-            width: 100%;
-            padding: 12px;
+        .action-grid {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }}
+
+        .file-upload-btn, .mic-btn {{
+            padding: 10px;
             background: rgba(168, 85, 247, 0.1);
             border: 1px dashed var(--neon-purple);
             border-radius: 14px;
@@ -227,11 +178,20 @@ def get_web_interface():
             font-weight: 600;
             text-align: center;
             cursor: pointer;
-            margin-bottom: 12px;
-            display: block;
+            font-size: 0.85rem;
             transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }}
-        .file-upload-btn:active {{ transform: scale(0.98); background: rgba(168, 85, 247, 0.2); }}
+        .mic-btn.recording {{
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+            color: #fca5a5;
+            animation: pulse 1s infinite;
+        }}
+        @keyframes pulse {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} 100% {{ opacity: 1; }} }}
 
         .btn {{
             width: 100%;
@@ -248,112 +208,149 @@ def get_web_interface():
         }}
         .btn:active {{ transform: scale(0.97); }}
 
-        .audio-btn {{
-            background: rgba(255, 255, 255, 0.1);
+        .tool-bar {{
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }}
+        .tool-btn {{
+            background: rgba(255, 255, 255, 0.08);
             border: 1px solid var(--border);
             color: #fff;
-            padding: 6px 12px;
+            padding: 6px 10px;
             border-radius: 8px;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             cursor: pointer;
-            margin-top: 4px;
             display: inline-flex;
             align-items: center;
             gap: 4px;
         }}
+        .tool-btn:hover {{ background: rgba(255, 255, 255, 0.15); }}
 
-        .chat-box {{
-            height: 280px;
-            overflow-y: auto;
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 14px;
-            padding: 12px;
+        .history-box {{
+            margin-top: 18px;
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--border);
-            margin-bottom: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            border-radius: 14px;
+            padding: 10px;
+            max-height: 120px;
+            overflow-y: auto;
         }}
-        .msg {{ padding: 10px 12px; border-radius: 14px; max-width: 85%; font-size: 0.88rem; line-height: 1.4; word-wrap: break-word; }}
-        .msg.user {{ background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue)); color: white; align-self: flex-end; }}
-        .msg.ai {{ background: rgba(255, 255, 255, 0.08); color: var(--text); align-self: flex-start; border: 1px solid var(--border); }}
+        .history-item {{
+            font-size: 0.78rem;
+            padding: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }}
+        .history-item:hover {{ color: #fff; background: rgba(255,255,255,0.05); }}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>BALTranslate Pro ✨</h1>
-            <div class="subtitle">Galerie • Traduction • Agent BalIA</div>
+            <div class="subtitle">Dictée Vocale • Scan Galerie • Export PDF</div>
         </div>
 
-        <div class="nav-tabs">
-            <button class="tab-btn active" id="btnTransTab">🌐 Traducteur</button>
-            <button class="tab-btn" id="btnAiTab">🤖 Agent BalIA</button>
-        </div>
-
-        <!-- TAB 1 -->
-        <div id="transTab" class="section active">
-            <label>📁 Galerie d'images :</label>
+        <div class="action-grid">
             <input type="file" id="imageInput" accept="image/*" style="display:none;">
-            <label for="imageInput" class="file-upload-btn">🖼️ Importer une photo depuis la galerie</label>
-            
-            <div id="ocrStatus" style="text-align:center; font-size:0.8rem; color:#38bdf8; margin-bottom:8px;"></div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <label style="margin: 0;">Texte source :</label>
-                <button class="audio-btn" id="btnPlaySourceAudio">🔊 Écouter</button>
-            </div>
-            <textarea id="sourceText" placeholder="Entrez votre texte ici ou importez une image..." style="margin-top: 6px;"></textarea>
-            
-            <div class="controls">
-                <select id="sourceLang">{options_html}</select>
-                <select id="targetLang">{options_target}</select>
-            </div>
-
-            <button class="btn" id="btnTranslate">Traduire maintenant</button>
-
-            <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center;">
-                <label style="margin: 0;">Résultat :</label>
-                <button class="audio-btn" id="btnPlayAudio">🔊 Écouter</button>
-            </div>
-            <textarea id="resultText" readonly placeholder="La traduction s'affichera ici..." style="margin-top: 6px;"></textarea>
+            <label for="imageInput" class="file-upload-btn">🖼️ Galerie photo</label>
+            <button class="mic-btn" id="btnMic">🎙️ Dictée vocale</button>
         </div>
 
-        <!-- TAB 2 -->
-        <div id="aiTab" class="section">
-            <div class="chat-box" id="chatBox">
-                <div class="msg ai">مَرْحَبًا ! Je suis <b>BalIA</b>. Posez-moi toutes vos questions !</div>
-            </div>
+        <div id="ocrStatus" style="text-align:center; font-size:0.8rem; color:#38bdf8; margin-bottom:8px;"></div>
 
-            <div style="display: flex; gap: 6px;">
-                <input type="text" id="aiInput" placeholder="Posez une question à BalIA...">
-                <button class="btn" id="btnSendAi" style="width: 80px;">OK</button>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="margin: 0;">Texte original :</label>
+            <button class="tool-btn" id="btnPlaySourceAudio">🔊 Écouter</button>
+        </div>
+        <textarea id="sourceText" placeholder="Tapez votre texte ou dites une phrase..." style="margin-top: 6px;"></textarea>
+        
+        <div class="controls">
+            <select id="sourceLang">{options_html}</select>
+            <select id="targetLang">{options_target}</select>
+        </div>
+
+        <button class="btn" id="btnTranslate">Traduire instantanément</button>
+
+        <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center;">
+            <label style="margin: 0;">Résultat :</label>
+            <div class="tool-bar">
+                <button class="tool-btn" id="btnPlayAudio">🔊 Écouter</button>
+                <button class="tool-btn" id="btnCopy">📋 Copier</button>
+                <button class="tool-btn" id="btnPdf">📄 Export PDF</button>
+            </div>
+        </div>
+        <textarea id="resultText" readonly placeholder="La traduction s'affichera ici..." style="margin-top: 6px;"></textarea>
+
+        <div style="margin-top: 14px;">
+            <label style="margin-bottom: 4px;">📜 Historique récent :</label>
+            <div class="history-box" id="historyBox">
+                <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center;">Aucun historique pour le moment</div>
             </div>
         </div>
     </div>
 
+    <!-- Modèle HTML masqué pour la génération du PDF -->
+    <div id="pdfTemplate" style="display:none; padding:20px; font-family:Arial; color:#1e293b;">
+        <h2 style="color:#7c3aed; border-bottom:2px solid #7c3aed; padding-bottom:5px;">Rapport de Traduction - BALTranslate Pro</h2>
+        <p style="font-size:12px; color:#64748b;">Généré automatiquement</p>
+        <hr>
+        <h3 style="color:#0f172a;">Texte Original :</h3>
+        <p id="pdfSource" style="background:#f1f5f9; padding:12px; border-radius:8px; font-size:14px;"></p>
+        <h3 style="color:#0f172a;">Traduction :</h3>
+        <p id="pdfTarget" style="background:#f3e8ff; padding:12px; border-radius:8px; font-size:14px; color:#581c87;"></p>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {{
-            const btnTransTab = document.getElementById('btnTransTab');
-            const btnAiTab = document.getElementById('btnAiTab');
-            const transTab = document.getElementById('transTab');
-            const aiTab = document.getElementById('aiTab');
-            
-            btnTransTab.addEventListener('click', function() {{
-                transTab.classList.add('active');
-                aiTab.classList.remove('active');
-                btnTransTab.classList.add('active');
-                btnAiTab.classList.remove('active');
-            }});
+            const sourceText = document.getElementById('sourceText');
+            const resultText = document.getElementById('resultText');
+            const historyBox = document.getElementById('historyBox');
 
-            btnAiTab.addEventListener('click', function() {{
-                aiTab.classList.add('active');
-                transTab.classList.remove('active');
-                btnAiTab.classList.add('active');
-                btnTransTab.classList.remove('active');
-            }});
+            // --- 1. Dictée Vocale (Speech Recognition) ---
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {{
+                const recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                
+                const btnMic = document.getElementById('btnMic');
+                btnMic.addEventListener('click', () => {{
+                    recognition.lang = document.getElementById('sourceLang').value === 'ar' ? 'ar-SA' : 'fr-FR';
+                    try {{
+                        recognition.start();
+                        btnMic.classList.add('recording');
+                        btnMic.innerText = '🔴 Écoute en cours...';
+                    }} catch (e) {{
+                        recognition.stop();
+                    }}
+                }});
 
-            // OCR via Galerie d'images
+                recognition.onresult = (event) => {{
+                    sourceText.value = event.results[0][0].transcript;
+                    btnMic.classList.remove('recording');
+                    btnMic.innerText = '🎙️ Dictée vocale';
+                }};
+
+                recognition.onerror = () => {{
+                    btnMic.classList.remove('recording');
+                    btnMic.innerText = '🎙️ Dictée vocale';
+                }};
+
+                recognition.onend = () => {{
+                    btnMic.classList.remove('recording');
+                    btnMic.innerText = '🎙️ Dictée vocale';
+                }};
+            }} else {{
+                document.getElementById('btnMic').style.display = 'none';
+            }}
+
+            // --- 2. OCR via Galerie ---
             document.getElementById('imageInput').addEventListener('change', async function() {{
                 const status = document.getElementById('ocrStatus');
                 if (!this.files || !this.files[0]) return;
@@ -362,7 +359,7 @@ def get_web_interface():
                 try {{
                     const worker = await Tesseract.createWorker('fra+eng');
                     const ret = await worker.recognize(this.files[0]);
-                    document.getElementById('sourceText').value = ret.data.text;
+                    sourceText.value = ret.data.text;
                     status.innerText = "✅ Texte extrait avec succès !";
                     await worker.terminate();
                 }} catch (e) {{
@@ -370,9 +367,9 @@ def get_web_interface():
                 }}
             }});
 
-            // Envoi de la demande de traduction
+            // --- 3. Traduction & Historique ---
             document.getElementById('btnTranslate').addEventListener('click', async function() {{
-                const text = document.getElementById('sourceText').value;
+                const text = sourceText.value;
                 const src = document.getElementById('sourceLang').value;
                 const tgt = document.getElementById('targetLang').value;
 
@@ -381,7 +378,7 @@ def get_web_interface():
                     return;
                 }}
 
-                document.getElementById('resultText').value = "Traduction en cours...";
+                resultText.value = "Traduction en cours...";
 
                 try {{
                     const res = await fetch('/translate', {{
@@ -390,76 +387,78 @@ def get_web_interface():
                         body: JSON.stringify({{ text: text, source_lang: src, target_lang: tgt }})
                     }});
                     const data = await res.json();
-                    document.getElementById('resultText').value = data.translated_text || data.detail;
+                    const translated = data.translated_text || data.detail;
+                    resultText.value = translated;
+                    
+                    saveToHistory(text, translated);
                 }} catch(e) {{
-                    alert("Erreur de connexion lors de la traduction.");
+                    alert("Erreur lors de la traduction.");
                 }}
             }});
 
-            // Lecture Audio de la Traduction
-            document.getElementById('btnPlayAudio').addEventListener('click', function() {{
-                const text = document.getElementById('resultText').value;
-                const lang = document.getElementById('targetLang').value;
-
-                if (!text.trim() || text === "La traduction s'affichera ici...") {{
-                    alert("Aucun texte à lire.");
-                    return;
-                }}
-
-                const audioUrl = `/tts?text=${{encodeURIComponent(text)}}&lang=${{lang}}`;
-                const audio = new Audio(audioUrl);
-                audio.play();
-            }});
-
-            // Lecture Audio du Texte Source
-            document.getElementById('btnPlaySourceAudio').addEventListener('click', function() {{
-                const text = document.getElementById('sourceText').value;
-                const lang = document.getElementById('sourceLang').value;
-
-                if (!text.trim()) {{
-                    alert("Aucun texte à lire.");
-                    return;
-                }}
-
-                const audioUrl = `/tts?text=${{encodeURIComponent(text)}}&lang=${{lang}}`;
-                const audio = new Audio(audioUrl);
-                audio.play();
-            }});
-
-            // Discussion avec l'Agent BalIA
-            async function askAI() {{
-                const input = document.getElementById('aiInput');
-                const prompt = input.value.trim();
-                const context = document.getElementById('sourceText').value;
-
-                if (!prompt) return;
-
-                const chatBox = document.getElementById('chatBox');
-                chatBox.innerHTML += `<div class="msg user">${{prompt}}</div>`;
-                input.value = '';
-                chatBox.scrollTop = chatBox.scrollHeight;
-
-                try {{
-                    const res = await fetch('/ai-chat', {{
-                        method: 'POST',
-                        headers: {{'Content-Type': 'application/json'}},
-                        body: JSON.stringify({{ prompt: prompt, context_text: context }})
-                    }});
-                    const data = await res.json();
-                    if(data.response) {{
-                        chatBox.innerHTML += `<div class="msg ai">${{data.response.replace(/\\n/g, '<br>')}}</div>`;
-                    }} else {{
-                        chatBox.innerHTML += `<div class="msg ai" style="color:#ef4444;">${{data.detail}}</div>`;
-                    }}
-                }} catch (e) {{
-                    chatBox.innerHTML += `<div class="msg ai" style="color:#ef4444;">Erreur réseau.</div>`;
-                }}
-                chatBox.scrollTop = chatBox.scrollHeight;
+            // --- 4. Historique Local ---
+            function saveToHistory(src, tgt) {{
+                let history = JSON.parse(localStorage.getItem('bal_history') || '[]');
+                history.unshift({{ src, tgt }});
+                if (history.length > 5) history.pop();
+                localStorage.setItem('bal_history', JSON.stringify(history));
+                renderHistory();
             }}
 
-            document.getElementById('btnSendAi').addEventListener('click', askAI);
-            document.getElementById('aiInput').addEventListener('keypress', function(e) {{
-                if (e.key === 'Enter') askAI();
+            function renderHistory() {{
+                let history = JSON.parse(localStorage.getItem('bal_history') || '[]');
+                if (history.length === 0) return;
+                historyBox.innerHTML = '';
+                history.forEach(item => {{
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.innerText = `▪ ${item.src} ➔ ${item.tgt}`;
+                    div.onclick = () => {{
+                        sourceText.value = item.src;
+                        resultText.value = item.tgt;
+                    }};
+                    historyBox.appendChild(div);
+                }});
+            }}
+            renderHistory();
+
+            // --- 5. Copier dans le Presse-Papier ---
+            document.getElementById('btnCopy').addEventListener('click', () => {{
+                if (resultText.value) {{
+                    navigator.clipboard.writeText(resultText.value);
+                    alert("Traduction copiée !");
+                }}
+            }});
+
+            // --- 6. Exportation PDF ---
+            document.getElementById('btnPdf').addEventListener('click', () => {{
+                if (!resultText.value || resultText.value === "La traduction s'affichera ici...") {{
+                    alert("Veuillez d'abord effectuer une traduction.");
+                    return;
+                }}
+                document.getElementById('pdfSource').innerText = sourceText.value;
+                document.getElementById('pdfTarget').innerText = resultText.value;
+                
+                const element = document.getElementById('pdfTemplate');
+                element.style.display = 'block';
+                html2pdf().from(element).save('Traduction_BALTranslate.pdf').then(() => {{
+                    element.style.display = 'none';
+                }});
+            }});
+
+            // --- 7. Synthese Vocale TTS ---
+            document.getElementById('btnPlayAudio').addEventListener('click', function() {{
+                const text = resultText.value;
+                const lang = document.getElementById('targetLang').value;
+                if (!text.trim()) return;
+                new Audio(`/tts?text=${{encodeURIComponent(text)}}&lang=${{lang}}`).play();
+            }});
+
+            document.getElementById('btnPlaySourceAudio').addEventListener('click', function() {{
+                const text = sourceText.value;
+                const lang = document.getElementById('sourceLang').value;
+                if (!text.trim()) return;
+                new Audio(`/tts?text=${{encodeURIComponent(text)}}&lang=${{lang}}`).play();
             }});
         }});
     </script>
