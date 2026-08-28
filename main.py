@@ -85,248 +85,268 @@ def get_web_interface():
     options_html = "".join([f'<option value="{k}">{v}</option>' for k, v in LANGUAGES.items()])
     options_target = "".join([f'<option value="{k}">{v}</option>' for k, v in LANGUAGES.items() if k != "auto"])
 
-    return f"""
-    <!DOCTYPE html>
-    <html lang="fr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <title>BALTranslate Pro</title>
-        <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-        <style>
-            :root {{
-                --bg: #030712;
-                --card-bg: rgba(17, 24, 39, 0.75);
-                --neon-purple: #8b5cf6;
-                --neon-blue: #3b82f6;
-                --neon-glow: 0 0 20px rgba(139, 92, 246, 0.4);
-                --text: #f9fafb;
-                --text-muted: #9ca3af;
-                --border: #1f2937;
-            }}
-            * {{ box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }}
-            body {{
-                background-color: var(--bg);
-                background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #030712 70%);
-                color: var(--text);
-                margin: 0;
-                padding: 12px;
-                display: flex;
-                justify-content: center;
-                min-height: 100vh;
-            }}
-            .container {{
-                width: 100%;
-                max-width: 500px;
-                background: var(--card-bg);
-                backdrop-filter: blur(16px);
-                -webkit-backdrop-filter: blur(16px);
-                padding: 20px;
-                border-radius: 24px;
-                border: 1px solid rgba(139, 92, 246, 0.2);
-                box-shadow: 0 10px 40px rgba(0,0,0,0.8), var(--neon-glow);
-            }}
-            .header h1 {{
-                font-size: 1.8rem;
-                margin: 0 0 4px 0;
-                text-align: center;
-                background: linear-gradient(135deg, #a78bfa, #60a5fa);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                font-weight: 900;
-            }}
-            .subtitle {{ text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 18px; }}
-            
-            .nav-tabs {{
-                display: flex;
-                background: #090d16;
-                padding: 4px;
-                border-radius: 14px;
-                gap: 6px;
-                margin-bottom: 18px;
-                border: 1px solid var(--border);
-            }}
-            .tab-btn {{
-                flex: 1;
-                padding: 12px;
-                border: none;
-                background: transparent;
-                color: var(--text-muted);
-                border-radius: 10px;
-                font-weight: 700;
-                font-size: 0.88rem;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }}
-            .tab-btn.active {{
-                background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
-                color: #fff;
-                box-shadow: var(--neon-glow);
-            }}
+    return f"""<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BALTranslate Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        :root {{
+            --bg: #030712;
+            --card-bg: rgba(17, 24, 39, 0.85);
+            --neon-purple: #8b5cf6;
+            --neon-blue: #3b82f6;
+            --neon-glow: 0 0 20px rgba(139, 92, 246, 0.4);
+            --text: #f9fafb;
+            --text-muted: #9ca3af;
+            --border: #1f2937;
+        }}
+        * {{ box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }}
+        body {{
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #030712 70%);
+            color: var(--text);
+            margin: 0;
+            padding: 12px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }}
+        .container {{
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 20px;
+            border-radius: 24px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8), var(--neon-glow);
+        }}
+        .header h1 {{
+            font-size: 1.8rem;
+            margin: 0 0 4px 0;
+            text-align: center;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+        }}
+        .subtitle {{ text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 18px; }}
+        
+        .nav-tabs {{
+            display: flex;
+            background: #090d16;
+            padding: 4px;
+            border-radius: 14px;
+            gap: 6px;
+            margin-bottom: 18px;
+            border: 1px solid var(--border);
+        }}
+        .tab-btn {{
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }}
+        .tab-btn.active {{
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+            color: #fff;
+            box-shadow: var(--neon-glow);
+        }}
 
-            .section {{ display: none; }}
-            .section.active {{ display: block; }}
+        .section {{ display: none; }}
+        .section.active {{ display: block; }}
 
-            label {{ display: block; font-size: 0.75rem; font-weight: 700; color: #a78bfa; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }}
-            
-            textarea, input[type="text"], input[type="password"], select {{
-                width: 100%;
-                background: #090d16;
-                border: 1px solid var(--border);
-                color: #fff;
-                border-radius: 12px;
-                padding: 12px;
-                font-size: 0.92rem;
-                outline: none;
-                transition: border-color 0.3s;
-            }}
-            textarea {{ height: 110px; resize: none; }}
-            textarea:focus, select:focus, input:focus {{ border-color: var(--neon-purple); box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }}
+        label {{ display: block; font-size: 0.75rem; font-weight: 700; color: #a78bfa; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }}
+        
+        textarea, input[type="text"], input[type="password"], select {{
+            width: 100%;
+            background: #090d16;
+            border: 1px solid var(--border);
+            color: #fff;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 0.92rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }}
+        textarea {{ height: 110px; resize: none; }}
+        textarea:focus, select:focus, input:focus {{ border-color: var(--neon-purple); box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }}
 
-            .controls {{ display: flex; gap: 8px; margin: 10px 0; }}
+        .controls {{ display: flex; gap: 8px; margin: 10px 0; }}
 
-            /* Style du bouton importer fichier */
-            .file-upload-btn {{
-                width: 100%;
-                padding: 12px;
-                background: #111827;
-                border: 1px dashed var(--neon-purple);
-                border-radius: 12px;
-                color: #a78bfa;
-                font-weight: 600;
-                text-align: center;
-                cursor: pointer;
-                margin-bottom: 12px;
-                display: block;
-            }}
+        .file-upload-btn {{
+            width: 100%;
+            padding: 12px;
+            background: #111827;
+            border: 1px dashed var(--neon-purple);
+            border-radius: 12px;
+            color: #a78bfa;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: block;
+        }}
 
-            .btn {{
-                width: 100%;
-                padding: 14px;
-                background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
-                color: white;
-                border: none;
-                border-radius: 12px;
-                font-weight: 700;
-                font-size: 0.95rem;
-                cursor: pointer;
-                box-shadow: var(--neon-glow);
-                transition: transform 0.1s;
-            }}
-            .btn:active {{ transform: scale(0.97); }}
+        .btn {{
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            box-shadow: var(--neon-glow);
+        }}
+        .btn:active {{ transform: scale(0.97); }}
 
-            .chat-box {{
-                height: 250px;
-                overflow-y: auto;
-                background: #090d16;
-                border-radius: 12px;
-                padding: 12px;
-                border: 1px solid var(--border);
-                margin-bottom: 10px;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }}
-            .msg {{ padding: 10px 12px; border-radius: 12px; max-width: 85%; font-size: 0.88rem; line-height: 1.4; }}
-            .msg.user {{ background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue)); color: white; align-self: flex-end; }}
-            .msg.ai {{ background: #1f2937; color: var(--text); align-self: flex-start; border: 1px solid var(--border); }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>BALTranslate Pro ✨</h1>
-                <div class="subtitle">Scanner Galerie • Traduction • Agent BalIA</div>
-            </div>
-
-            <div class="nav-tabs">
-                <button class="tab-btn active" id="btnTransTab" onclick="switchTab('transTab', 'btnTransTab')">🌐 Traducteur</button>
-                <button class="tab-btn" id="btnAiTab" onclick="switchTab('aiTab', 'btnAiTab')">🤖 Agent BalIA</button>
-            </div>
-
-            <!-- TAB 1 -->
-            <div id="transTab" class="section active">
-                <label>📁 Importer un document depuis la galerie :</label>
-                <!-- Retrait strict de capture pour forcer l'ouverture de la Galerie -->
-                <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="processOCR()">
-                <label for="imageInput" class="file-upload-btn">🖼️ Choisir une image dans la galerie</label>
-                
-                <div id="ocrStatus" style="text-align:center; font-size:0.8rem; color:#60a5fa; margin-bottom:8px;"></div>
-
-                <label>Texte source :</label>
-                <textarea id="sourceText" placeholder="Entrez votre texte ici ou importez une image..."></textarea>
-                
-                <div class="controls">
-                    <select id="sourceLang">{options_html}</select>
-                    <select id="targetLang">{options_target}</select>
-                </div>
-
-                <button class="btn" onclick="translateText()">Traduire maintenant</button>
-
-                <label style="margin-top: 12px;">Résultat :</label>
-                <textarea id="resultText" readonly placeholder="La traduction s'affichera ici..."></textarea>
-            </div>
-
-            <!-- TAB 2 -->
-            <div id="aiTab" class="section">
-                <label>Clé API Gemini :</label>
-                <input type="password" id="geminiKey" placeholder="Collez votre clé API Gemini ici..." style="margin-bottom: 10px;">
-                
-                <div class="chat-box" id="chatBox">
-                    <div class="msg ai">مَرْحَبًا ! Je suis <b>BalIA</b>. Posez-moi vos questions ou demandez-moi d'analyser vos documents scannés.</div>
-                </div>
-
-                <div style="display: flex; gap: 6px;">
-                    <input type="text" id="aiInput" placeholder="Posez une question..." onkeypress="if(event.key==='Enter') askAI()">
-                    <button class="btn" style="width: 80px;" onclick="askAI()">OK</button>
-                </div>
-            </div>
+        .chat-box {{
+            height: 250px;
+            overflow-y: auto;
+            background: #090d16;
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }}
+        .msg {{ padding: 10px 12px; border-radius: 12px; max-width: 85%; font-size: 0.88rem; line-height: 1.4; }}
+        .msg.user {{ background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue)); color: white; align-self: flex-end; }}
+        .msg.ai {{ background: #1f2937; color: var(--text); align-self: flex-start; border: 1px solid var(--border); }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>BALTranslate Pro ✨</h1>
+            <div class="subtitle">Galerie • Traduction • Agent BalIA</div>
         </div>
 
-        <script>
-            function switchTab(tabId, btnId) {{
-                document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
-                document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-                document.getElementById(tabId).classList.add('active');
-                document.getElementById(btnId).classList.add('active');
-            }}
+        <div class="nav-tabs">
+            <button class="tab-btn active" id="btnTransTab">🌐 Traducteur</button>
+            <button class="tab-btn" id="btnAiTab">🤖 Agent BalIA</button>
+        </div>
 
-            async function processOCR() {{
-                const input = document.getElementById('imageInput');
+        <!-- TAB 1 -->
+        <div id="transTab" class="section active">
+            <label>📁 Galerie d'images :</label>
+            <input type="file" id="imageInput" accept="image/*" style="display:none;">
+            <label for="imageInput" class="file-upload-btn">🖼️ Importer une photo depuis la galerie</label>
+            
+            <div id="ocrStatus" style="text-align:center; font-size:0.8rem; color:#60a5fa; margin-bottom:8px;"></div>
+
+            <label>Texte source :</label>
+            <textarea id="sourceText" placeholder="Entrez votre texte ici ou importez une image..."></textarea>
+            
+            <div class="controls">
+                <select id="sourceLang">{options_html}</select>
+                <select id="targetLang">{options_target}</select>
+            </div>
+
+            <button class="btn" id="btnTranslate">Traduire maintenant</button>
+
+            <label style="margin-top: 12px;">Résultat :</label>
+            <textarea id="resultText" readonly placeholder="La traduction s'affichera ici..."></textarea>
+        </div>
+
+        <!-- TAB 2 -->
+        <div id="aiTab" class="section">
+            <label>Clé API Gemini :</label>
+            <input type="password" id="geminiKey" placeholder="Collez votre clé API Gemini..." style="margin-bottom: 10px;">
+            
+            <div class="chat-box" id="chatBox">
+                <div class="msg ai">مَرْحَبًا ! Je suis <b>BalIA</b>. Posez-moi vos questions !</div>
+            </div>
+
+            <div style="display: flex; gap: 6px;">
+                <input type="text" id="aiInput" placeholder="Posez une question...">
+                <button class="btn" id="btnSendAi" style="width: 80px;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Attendre que le DOM soit chargé pour attacher les événements proprement
+        document.addEventListener('DOMContentLoaded', function() {{
+            
+            const btnTransTab = document.getElementById('btnTransTab');
+            const btnAiTab = document.getElementById('btnAiTab');
+            const transTab = document.getElementById('transTab');
+            const aiTab = document.getElementById('aiTab');
+            
+            // Gestion du changement d'onglets
+            btnTransTab.addEventListener('click', function() {{
+                transTab.classList.add('active');
+                aiTab.classList.remove('active');
+                btnTransTab.classList.add('active');
+                btnAiTab.classList.remove('active');
+            }});
+
+            btnAiTab.addEventListener('click', function() {{
+                aiTab.classList.add('active');
+                transTab.classList.remove('active');
+                btnAiTab.classList.add('active');
+                btnTransTab.classList.remove('active');
+            }});
+
+            // OCR via la Galerie
+            document.getElementById('imageInput').addEventListener('change', async function() {{
                 const status = document.getElementById('ocrStatus');
-                if (!input.files || !input.files[0]) return;
+                if (!this.files || !this.files[0]) return;
 
                 status.innerText = "⚡ Lecture de l'image en cours...";
                 try {{
                     const worker = await Tesseract.createWorker('fra+eng');
-                    const ret = await worker.recognize(input.files[0]);
+                    const ret = await worker.recognize(this.files[0]);
                     document.getElementById('sourceText').value = ret.data.text;
                     status.innerText = "✅ Texte extrait avec succès !";
                     await worker.terminate();
                 }} catch (e) {{
-                    status.innerText = "❌ Erreur lors de la lecture de l'image.";
+                    status.innerText = "❌ Erreur de lecture.";
                 }}
-            }}
+            }});
 
-            async function translateText() {{
+            // Traduction
+            document.getElementById('btnTranslate').addEventListener('click', async function() {{
                 const text = document.getElementById('sourceText').value;
                 const src = document.getElementById('sourceLang').value;
                 const tgt = document.getElementById('targetLang').value;
 
                 if (!text.trim()) {{
-                    alert("Veuillez saisir du texte à traduire.");
+                    alert("Veuillez entrer du texte.");
                     return;
                 }}
 
-                const res = await fetch('/translate', {{
-                    method: 'POST',
-                    headers: {{'Content-Type': 'application/json'}},
-                    body: JSON.stringify({{ text: text, source_lang: src, target_lang: tgt }})
-                }});
-                const data = await res.json();
-                document.getElementById('resultText').value = data.translated_text || data.detail;
-            }}
+                document.getElementById('resultText').value = "Traduction en cours...";
 
+                try {{
+                    const res = await fetch('/translate', {{
+                        method: 'POST',
+                        headers: {{'Content-Type': 'application/json'}},
+                        body: JSON.stringify({{ text: text, source_lang: src, target_lang: tgt }})
+                    }});
+                    const data = await res.json();
+                    document.getElementById('resultText').value = data.translated_text || data.detail;
+                }} catch(e) {{
+                    alert("Erreur de connexion lors de la traduction.");
+                }}
+            }});
+
+            // Envoi à l'agent IA BalIA
             async function askAI() {{
                 const input = document.getElementById('aiInput');
                 const key = document.getElementById('geminiKey').value;
@@ -335,7 +355,7 @@ def get_web_interface():
 
                 if (!prompt) return;
                 if (!key) {{
-                    alert("Veuillez d'abord entrer votre clé API Gemini.");
+                    alert("Veuillez saisir votre clé API Gemini.");
                     return;
                 }}
 
@@ -352,16 +372,21 @@ def get_web_interface():
                     }});
                     const data = await res.json();
                     if(data.response) {{
-                        chatBox.innerHTML += `<div class="msg ai">${{data.response.replace(/\n/g, '<br>')}}</div>`;
+                        chatBox.innerHTML += `<div class="msg ai">${{data.response.replace(/\\n/g, '<br>')}}</div>`;
                     }} else {{
                         chatBox.innerHTML += `<div class="msg ai" style="color:#ef4444;">${{data.detail}}</div>`;
                     }}
                 }} catch (e) {{
-                    chatBox.innerHTML += `<div class="msg ai" style="color:#ef4444;">Erreur de réseau.</div>`;
+                    chatBox.innerHTML += `<div class="msg ai" style="color:#ef4444;">Erreur réseau.</div>`;
                 }}
                 chatBox.scrollTop = chatBox.scrollHeight;
             }}
-        </script>
-    </body>
-    </html>
-    """
+
+            document.getElementById('btnSendAi').addEventListener('click', askAI);
+            document.getElementById('aiInput').addEventListener('keypress', function(e) {{
+                if (e.key === 'Enter') askAI();
+            }});
+        }});
+    </script>
+</body>
+</html>"""
