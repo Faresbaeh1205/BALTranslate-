@@ -7,12 +7,13 @@ import io
 import os
 import google.generativeai as genai
 
-app = FastAPI(title="BALTranslate Ultimate")
+app = FastAPI(title="BALTranslate Pro & BalIA")
 
-# Clé API Gemini configurée
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AQ.Ab8RN6L4rFOFYKOYAkPdwcpJS6VCbULrFLfT3KPU8l2H8eSWeA")
+# Configuration de la clé API Gemini
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AQ.Ab8RN6IsHJrC90Pxq5Ovn_T-s5TM4IGFmyWPyKQl0qBMzXRl1w")
+genai.configure(api_key=GEMINI_API_KEY)
 
-# Liste complète de toutes les langues supportées
+# Dictionnaire complet des langues supportées
 LANGUAGES = {
     "auto": "Détection automatique", "af": "Afrikaans", "sq": "Albanais", "am": "Amharique", 
     "ar": "Arabe", "hy": "Arménien", "az": "Azerbaïdjanais", "eu": "Basque", "be": "Biélorusse", 
@@ -63,6 +64,7 @@ def text_to_speech(text: str, lang: str = "fr"):
     if not text.strip():
         raise HTTPException(status_code=400, detail="Texte vide")
     try:
+        # Fallback de langue si la sous-langue n'est pas directement supportée par gTTS
         tts_lang = lang if lang in ["fr", "en", "ar", "es", "de", "it", "ru", "zh-CN", "ja", "ko", "pt", "tr"] else "en"
         tts = gTTS(text=text, lang=tts_lang, slow=False)
         fp = io.BytesIO()
@@ -78,12 +80,23 @@ def ai_chat(req: AIRequest):
         raise HTTPException(status_code=400, detail="Question vide")
         
     try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Initialisation dynamique du modèle Gemini
+        model_names = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
+        model = None
         
+        for m in model_names:
+            try:
+                model = genai.GenerativeModel(m)
+                break
+            except Exception:
+                continue
+                
+        if not model:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+
         full_prompt = req.prompt
         if req.context_text.strip():
-            full_prompt = f"Contexte scanné :\n{req.context_text}\n\nQuestion : {req.prompt}"
+            full_prompt = f"Contexte scanné / texte actuel :\n{req.context_text}\n\nQuestion de l'utilisateur : {req.prompt}"
             
         response = model.generate_content(full_prompt)
         return {"response": response.text}
@@ -100,23 +113,23 @@ def get_web_interface():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BALTranslate Pro</title>
+    <title>BALTranslate Pro & BalIA</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         :root {{
-            --bg: #05050d;
-            --card-bg: rgba(15, 23, 42, 0.75);
+            --bg: #030712;
+            --card-bg: rgba(15, 23, 42, 0.85);
             --neon-purple: #a855f7;
             --neon-blue: #06b6d4;
-            --neon-glow: 0 0 25px rgba(168, 85, 247, 0.4);
+            --neon-glow: 0 0 25px rgba(168, 85, 247, 0.35);
             --text: #f8fafc;
             --text-muted: #94a3b8;
-            --border: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.12);
         }}
         * {{ box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }}
         
         body {{
-            background: #030712;
+            background: var(--bg);
             color: var(--text);
             margin: 0;
             padding: 12px;
@@ -138,13 +151,13 @@ def get_web_interface():
                         radial-gradient(circle at 80% 80%, #0891b2 0%, transparent 40%),
                         radial-gradient(circle at 50% 50%, #831843 0%, transparent 50%);
             z-index: -1;
-            animation: pulseBg 12s infinite alternate ease-in-out;
-            filter: blur(60px);
+            animation: pulseBg 14s infinite alternate ease-in-out;
+            filter: blur(65px);
         }}
 
         @keyframes pulseBg {{
             0% {{ transform: rotate(0deg) scale(1); }}
-            100% {{ transform: rotate(10deg) scale(1.1); }}
+            100% {{ transform: rotate(8deg) scale(1.08); }}
         }}
 
         .container {{
@@ -155,12 +168,12 @@ def get_web_interface():
             -webkit-backdrop-filter: blur(20px);
             padding: 22px;
             border-radius: 28px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid var(--border);
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), var(--neon-glow);
         }}
 
         .header h1 {{
-            font-size: 1.9rem;
+            font-size: 1.8rem;
             margin: 0 0 4px 0;
             text-align: center;
             background: linear-gradient(135deg, #c084fc, #38bdf8);
@@ -276,7 +289,7 @@ def get_web_interface():
             flex-direction: column;
             gap: 8px;
         }}
-        .msg {{ padding: 10px 12px; border-radius: 14px; max-width: 85%; font-size: 0.88rem; line-height: 1.4; }}
+        .msg {{ padding: 10px 12px; border-radius: 14px; max-width: 85%; font-size: 0.88rem; line-height: 1.4; word-wrap: break-word; }}
         .msg.user {{ background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue)); color: white; align-self: flex-end; }}
         .msg.ai {{ background: rgba(255, 255, 255, 0.08); color: var(--text); align-self: flex-start; border: 1px solid var(--border); }}
     </style>
@@ -355,7 +368,7 @@ def get_web_interface():
                 btnTransTab.classList.remove('active');
             }});
 
-            // OCR via Galerie
+            // OCR via Galerie d'images
             document.getElementById('imageInput').addEventListener('change', async function() {{
                 const status = document.getElementById('ocrStatus');
                 if (!this.files || !this.files[0]) return;
@@ -368,11 +381,11 @@ def get_web_interface():
                     status.innerText = "✅ Texte extrait avec succès !";
                     await worker.terminate();
                 }} catch (e) {{
-                    status.innerText = "❌ Erreur de lecture.";
+                    status.innerText = "❌ Erreur de lecture de l'image.";
                 }}
             }});
 
-            // Traduction
+            // Envoi de la demande de traduction
             document.getElementById('btnTranslate').addEventListener('click', async function() {{
                 const text = document.getElementById('sourceText').value;
                 const src = document.getElementById('sourceLang').value;
@@ -398,7 +411,7 @@ def get_web_interface():
                 }}
             }});
 
-            // Audio Traduction
+            // Lecture Audio de la Traduction
             document.getElementById('btnPlayAudio').addEventListener('click', function() {{
                 const text = document.getElementById('resultText').value;
                 const lang = document.getElementById('targetLang').value;
@@ -413,7 +426,7 @@ def get_web_interface():
                 audio.play();
             }});
 
-            // Audio Texte Source
+            // Lecture Audio du Texte Source
             document.getElementById('btnPlaySourceAudio').addEventListener('click', function() {{
                 const text = document.getElementById('sourceText').value;
                 const lang = document.getElementById('sourceLang').value;
@@ -428,7 +441,7 @@ def get_web_interface():
                 audio.play();
             }});
 
-            // Chat BalIA
+            // Discussion avec l'Agent BalIA
             async function askAI() {{
                 const input = document.getElementById('aiInput');
                 const prompt = input.value.trim();
