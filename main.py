@@ -1,17 +1,17 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
-from gtts import gTTS
+from gTTS import gTTS
 from deep_translator import GoogleTranslator
+from google import genai
 import io
 import os
-import google.generativeai as genai
 
 app = FastAPI(title="BALTranslate Pro & BalIA")
 
-# Configuration de la clé API Gemini
+# Configuration du nouveau client officiel Google GenAI
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AQ.Ab8RN6IsHJrC90Pxq5Ovn_T-s5TM4IGFmyWPyKQl0qBMzXRl1w")
-genai.configure(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 # Dictionnaire complet des langues supportées
 LANGUAGES = {
@@ -64,7 +64,6 @@ def text_to_speech(text: str, lang: str = "fr"):
     if not text.strip():
         raise HTTPException(status_code=400, detail="Texte vide")
     try:
-        # Fallback de langue si la sous-langue n'est pas directement supportée par gTTS
         tts_lang = lang if lang in ["fr", "en", "ar", "es", "de", "it", "ru", "zh-CN", "ja", "ko", "pt", "tr"] else "en"
         tts = gTTS(text=text, lang=tts_lang, slow=False)
         fp = io.BytesIO()
@@ -79,29 +78,26 @@ def ai_chat(req: AIRequest):
     if not req.prompt.strip():
         raise HTTPException(status_code=400, detail="Question vide")
         
-    try:
-        # Initialisation dynamique du modèle Gemini
-        model_names = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
-        model = None
-        
-        for m in model_names:
-            try:
-                model = genai.GenerativeModel(m)
-                break
-            except Exception:
-                continue
-                
-        if not model:
-            model = genai.GenerativeModel('gemini-1.5-flash')
+    full_prompt = req.prompt
+    if req.context_text.strip():
+        full_prompt = f"Contexte scanné / texte actuel :\n{req.context_text}\n\nQuestion de l'utilisateur : {req.prompt}"
 
-        full_prompt = req.prompt
-        if req.context_text.strip():
-            full_prompt = f"Contexte scanné / texte actuel :\n{req.context_text}\n\nQuestion de l'utilisateur : {req.prompt}"
-            
-        response = model.generate_content(full_prompt)
+    # Appel via le nouveau SDK google-genai
+    try:
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=full_prompt,
+        )
         return {"response": response.text}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur BalIA: {str(e)}")
+    except Exception:
+        try:
+            response = client.models.generate_content(
+                model='gemini-1.5-flash',
+                contents=full_prompt,
+            )
+            return {"response": response.text}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erreur BalIA: {str(e)}")
 
 @app.get("/", response_class=HTMLResponse)
 def get_web_interface():
