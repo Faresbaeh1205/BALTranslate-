@@ -3,17 +3,16 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
 from gTTS import gTTS
 from deep_translator import GoogleTranslator
-from google import genai
+import google.generativeai as genai
 import io
 import os
 
 app = FastAPI(title="BALTranslate Pro & BalIA")
 
-# Configuration du nouveau client officiel Google GenAI
+# Configuration de la clé API avec la bibliothèque google-generativeai
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AQ.Ab8RN6IsHJrC90Pxq5Ovn_T-s5TM4IGFmyWPyKQl0qBMzXRl1w")
-client = genai.Client(api_key=GEMINI_API_KEY)
+genai.configure(api_key=GEMINI_API_KEY)
 
-# Dictionnaire complet des langues supportées
 LANGUAGES = {
     "auto": "Détection automatique", "af": "Afrikaans", "sq": "Albanais", "am": "Amharique", 
     "ar": "Arabe", "hy": "Arménien", "az": "Azerbaïdjanais", "eu": "Basque", "be": "Biélorusse", 
@@ -82,22 +81,12 @@ def ai_chat(req: AIRequest):
     if req.context_text.strip():
         full_prompt = f"Contexte scanné / texte actuel :\n{req.context_text}\n\nQuestion de l'utilisateur : {req.prompt}"
 
-    # Appel via le nouveau SDK google-genai
     try:
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=full_prompt,
-        )
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(full_prompt)
         return {"response": response.text}
-    except Exception:
-        try:
-            response = client.models.generate_content(
-                model='gemini-1.5-flash',
-                contents=full_prompt,
-            )
-            return {"response": response.text}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Erreur BalIA: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur BalIA: {str(e)}")
 
 @app.get("/", response_class=HTMLResponse)
 def get_web_interface():
