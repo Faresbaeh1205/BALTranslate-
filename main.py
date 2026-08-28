@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
-from gTTS import gTTS
+from gtts import gTTS
 from deep_translator import GoogleTranslator
 import google.generativeai as genai
 import io
