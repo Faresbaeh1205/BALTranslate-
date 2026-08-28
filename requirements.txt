@@ -1,4 +1,4 @@
 fastapi
 uvicorn
-gTTS
+gtts
 deep-translator
