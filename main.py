@@ -67,7 +67,7 @@ def get_web_interface():
     options_html = "".join([f'<option value="{k}">{v}</option>' for k, v in LANGUAGES.items()])
     options_target = "".join([f'<option value="{k}">{v}</option>' for k, v in LANGUAGES.items() if k != "auto"])
 
-    return f"""<!DOCTYPE html>
+    html_content = """<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -76,7 +76,7 @@ def get_web_interface():
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        :root {{
+        :root {
             --bg: #030712;
             --card-bg: rgba(15, 23, 42, 0.85);
             --neon-purple: #a855f7;
@@ -85,10 +85,10 @@ def get_web_interface():
             --text: #f8fafc;
             --text-muted: #94a3b8;
             --border: rgba(255, 255, 255, 0.12);
-        }}
-        * {{ box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }}
+        }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
-        body {{
+        body {
             background: var(--bg);
             color: var(--text);
             margin: 0;
@@ -98,9 +98,9 @@ def get_web_interface():
             min-height: 100vh;
             overflow-x: hidden;
             position: relative;
-        }}
+        }
 
-        body::before {{
+        body::before {
             content: '';
             position: fixed;
             top: -50%;
@@ -113,14 +113,14 @@ def get_web_interface():
             z-index: -1;
             animation: pulseBg 14s infinite alternate ease-in-out;
             filter: blur(65px);
-        }}
+        }
 
-        @keyframes pulseBg {{
-            0% {{ transform: rotate(0deg) scale(1); }}
-            100% {{ transform: rotate(8deg) scale(1.08); }}
-        }}
+        @keyframes pulseBg {
+            0% { transform: rotate(0deg) scale(1); }
+            100% { transform: rotate(8deg) scale(1.08); }
+        }
 
-        .container {{
+        .container {
             width: 100%;
             max-width: 520px;
             background: var(--card-bg);
@@ -130,9 +130,9 @@ def get_web_interface():
             border-radius: 28px;
             border: 1px solid var(--border);
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), var(--neon-glow);
-        }}
+        }
 
-        .header h1 {{
+        .header h1 {
             font-size: 1.9rem;
             margin: 0 0 4px 0;
             text-align: center;
@@ -141,12 +141,12 @@ def get_web_interface():
             -webkit-text-fill-color: transparent;
             font-weight: 900;
             letter-spacing: -0.5px;
-        }}
-        .subtitle {{ text-align: center; color: var(--text-muted); font-size: 0.82rem; margin-bottom: 18px; }}
+        }
+        .subtitle { text-align: center; color: var(--text-muted); font-size: 0.82rem; margin-bottom: 18px; }
 
-        label {{ display: block; font-size: 0.75rem; font-weight: 700; color: #c084fc; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }}
+        label { display: block; font-size: 0.75rem; font-weight: 700; color: #c084fc; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        textarea, select {{
+        textarea, select {
             width: 100%;
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border);
@@ -156,20 +156,20 @@ def get_web_interface():
             font-size: 0.92rem;
             outline: none;
             transition: border-color 0.3s;
-        }}
-        textarea {{ height: 95px; resize: none; }}
-        textarea:focus, select:focus {{ border-color: var(--neon-purple); box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); }}
+        }
+        textarea { height: 95px; resize: none; }
+        textarea:focus, select:focus { border-color: var(--neon-purple); box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); }
 
-        .controls {{ display: flex; gap: 8px; margin: 10px 0; }}
+        .controls { display: flex; gap: 8px; margin: 10px 0; }
 
-        .action-grid {{
+        .action-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
             margin-bottom: 12px;
-        }}
+        }
 
-        .file-upload-btn, .mic-btn {{
+        .file-upload-btn, .mic-btn {
             padding: 10px;
             background: rgba(168, 85, 247, 0.1);
             border: 1px dashed var(--neon-purple);
@@ -184,16 +184,16 @@ def get_web_interface():
             align-items: center;
             justify-content: center;
             gap: 6px;
-        }}
-        .mic-btn.recording {{
+        }
+        .mic-btn.recording {
             background: rgba(239, 68, 68, 0.2);
             border-color: #ef4444;
             color: #fca5a5;
             animation: pulse 1s infinite;
-        }}
-        @keyframes pulse {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.5; }} 100% {{ opacity: 1; }} }}
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        .btn {{
+        .btn {
             width: 100%;
             padding: 14px;
             background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
@@ -205,15 +205,15 @@ def get_web_interface():
             cursor: pointer;
             box-shadow: var(--neon-glow);
             transition: 0.2s;
-        }}
-        .btn:active {{ transform: scale(0.97); }}
+        }
+        .btn:active { transform: scale(0.97); }
 
-        .tool-bar {{
+        .tool-bar {
             display: flex;
             gap: 6px;
             margin-top: 6px;
-        }}
-        .tool-btn {{
+        }
+        .tool-btn {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid var(--border);
             color: #fff;
@@ -224,10 +224,10 @@ def get_web_interface():
             display: inline-flex;
             align-items: center;
             gap: 4px;
-        }}
-        .tool-btn:hover {{ background: rgba(255, 255, 255, 0.15); }}
+        }
+        .tool-btn:hover { background: rgba(255, 255, 255, 0.15); }
 
-        .history-box {{
+        .history-box {
             margin-top: 18px;
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--border);
@@ -235,8 +235,8 @@ def get_web_interface():
             padding: 10px;
             max-height: 120px;
             overflow-y: auto;
-        }}
-        .history-item {{
+        }
+        .history-item {
             font-size: 0.78rem;
             padding: 6px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -245,8 +245,8 @@ def get_web_interface():
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-        }}
-        .history-item:hover {{ color: #fff; background: rgba(255,255,255,0.05); }}
+        }
+        .history-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
     </style>
 </head>
 <body>
@@ -271,8 +271,8 @@ def get_web_interface():
         <textarea id="sourceText" placeholder="Tapez votre texte ou dites une phrase..." style="margin-top: 6px;"></textarea>
         
         <div class="controls">
-            <select id="sourceLang">{options_html}</select>
-            <select id="targetLang">{options_target}</select>
+            <select id="sourceLang">__OPTIONS_SOURCE__</select>
+            <select id="targetLang">__OPTIONS_TARGET__</select>
         </div>
 
         <button class="btn" id="btnTranslate">Traduire instantanément</button>
@@ -295,7 +295,6 @@ def get_web_interface():
         </div>
     </div>
 
-    <!-- Modèle HTML masqué pour la génération du PDF -->
     <div id="pdfTemplate" style="display:none; padding:20px; font-family:Arial; color:#1e293b;">
         <h2 style="color:#7c3aed; border-bottom:2px solid #7c3aed; padding-bottom:5px;">Rapport de Traduction - BALTranslate Pro</h2>
         <p style="font-size:12px; color:#64748b;">Généré automatiquement</p>
@@ -307,160 +306,158 @@ def get_web_interface():
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {{
+        document.addEventListener('DOMContentLoaded', function() {
             const sourceText = document.getElementById('sourceText');
             const resultText = document.getElementById('resultText');
             const historyBox = document.getElementById('historyBox');
 
-            // --- 1. Dictée Vocale (Speech Recognition) ---
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (SpeechRecognition) {{
+            if (SpeechRecognition) {
                 const recognition = new SpeechRecognition();
                 recognition.continuous = false;
                 recognition.interimResults = false;
                 
                 const btnMic = document.getElementById('btnMic');
-                btnMic.addEventListener('click', () => {{
+                btnMic.addEventListener('click', () => {
                     recognition.lang = document.getElementById('sourceLang').value === 'ar' ? 'ar-SA' : 'fr-FR';
-                    try {{
+                    try {
                         recognition.start();
                         btnMic.classList.add('recording');
                         btnMic.innerText = '🔴 Écoute en cours...';
-                    }} catch (e) {{
+                    } catch (e) {
                         recognition.stop();
-                    }}
-                }});
+                    }
+                });
 
-                recognition.onresult = (event) => {{
+                recognition.onresult = (event) => {
                     sourceText.value = event.results[0][0].transcript;
                     btnMic.classList.remove('recording');
                     btnMic.innerText = '🎙️ Dictée vocale';
-                }};
+                };
 
-                recognition.onerror = () => {{
+                recognition.onerror = () => {
                     btnMic.classList.remove('recording');
                     btnMic.innerText = '🎙️ Dictée vocale';
-                }};
+                };
 
-                recognition.onend = () => {{
+                recognition.onend = () => {
                     btnMic.classList.remove('recording');
                     btnMic.innerText = '🎙️ Dictée vocale';
-                }};
-            }} else {{
+                };
+            } else {
                 document.getElementById('btnMic').style.display = 'none';
-            }}
+            }
 
-            // --- 2. OCR via Galerie ---
-            document.getElementById('imageInput').addEventListener('change', async function() {{
+            document.getElementById('imageInput').addEventListener('change', async function() {
                 const status = document.getElementById('ocrStatus');
                 if (!this.files || !this.files[0]) return;
 
                 status.innerText = "⚡ Lecture de l'image en cours...";
-                try {{
+                try {
                     const worker = await Tesseract.createWorker('fra+eng');
                     const ret = await worker.recognize(this.files[0]);
                     sourceText.value = ret.data.text;
                     status.innerText = "✅ Texte extrait avec succès !";
                     await worker.terminate();
-                }} catch (e) {{
+                } catch (e) {
                     status.innerText = "❌ Erreur de lecture de l'image.";
-                }}
-            }});
+                }
+            });
 
-            // --- 3. Traduction & Historique ---
-            document.getElementById('btnTranslate').addEventListener('click', async function() {{
+            document.getElementById('btnTranslate').addEventListener('click', async function() {
                 const text = sourceText.value;
                 const src = document.getElementById('sourceLang').value;
                 const tgt = document.getElementById('targetLang').value;
 
-                if (!text.trim()) {{
+                if (!text.trim()) {
                     alert("Veuillez entrer du texte.");
                     return;
-                }}
+                }
 
                 resultText.value = "Traduction en cours...";
 
-                try {{
-                    const res = await fetch('/translate', {{
+                try {
+                    const res = await fetch('/translate', {
                         method: 'POST',
-                        headers: {{'Content-Type': 'application/json'}},
-                        body: JSON.stringify({{ text: text, source_lang: src, target_lang: tgt }})
-                    }});
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ text: text, source_lang: src, target_lang: tgt })
+                    });
                     const data = await res.json();
                     const translated = data.translated_text || data.detail;
                     resultText.value = translated;
                     
                     saveToHistory(text, translated);
-                }} catch(e) {{
+                } catch(e) {
                     alert("Erreur lors de la traduction.");
-                }}
-            }});
+                }
+            });
 
-            // --- 4. Historique Local ---
-            function saveToHistory(src, tgt) {{
+            function saveToHistory(src, tgt) {
                 let history = JSON.parse(localStorage.getItem('bal_history') || '[]');
-                history.unshift({{ src, tgt }});
+                history.unshift({ src, tgt });
                 if (history.length > 5) history.pop();
                 localStorage.setItem('bal_history', JSON.stringify(history));
                 renderHistory();
-            }}
+            }
 
-            function renderHistory() {{
+            function renderHistory() {
                 let history = JSON.parse(localStorage.getItem('bal_history') || '[]');
                 if (history.length === 0) return;
                 historyBox.innerHTML = '';
-                history.forEach(item => {{
+                history.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'history-item';
                     div.innerText = `▪ ${item.src} ➔ ${item.tgt}`;
-                    div.onclick = () => {{
+                    div.onclick = () => {
                         sourceText.value = item.src;
                         resultText.value = item.tgt;
-                    }};
+                    };
                     historyBox.appendChild(div);
-                }});
-            }}
+                });
+            }
             renderHistory();
 
-            // --- 5. Copier dans le Presse-Papier ---
-            document.getElementById('btnCopy').addEventListener('click', () => {{
-                if (resultText.value) {{
+            document.getElementById('btnCopy').addEventListener('click', () => {
+                if (resultText.value) {
                     navigator.clipboard.writeText(resultText.value);
                     alert("Traduction copiée !");
-                }}
-            }});
+                }
+            });
 
-            // --- 6. Exportation PDF ---
-            document.getElementById('btnPdf').addEventListener('click', () => {{
-                if (!resultText.value || resultText.value === "La traduction s'affichera ici...") {{
+            document.getElementById('btnPdf').addEventListener('click', () => {
+                if (!resultText.value || resultText.value === "La traduction s'affichera ici...") {
                     alert("Veuillez d'abord effectuer une traduction.");
                     return;
-                }}
+                }
                 document.getElementById('pdfSource').innerText = sourceText.value;
                 document.getElementById('pdfTarget').innerText = resultText.value;
                 
                 const element = document.getElementById('pdfTemplate');
                 element.style.display = 'block';
-                html2pdf().from(element).save('Traduction_BALTranslate.pdf').then(() => {{
+                html2pdf().from(element).save('Traduction_BALTranslate.pdf').then(() => {
                     element.style.display = 'none';
-                }});
-            }});
+                });
+            });
 
-            // --- 7. Synthese Vocale TTS ---
-            document.getElementById('btnPlayAudio').addEventListener('click', function() {{
+            document.getElementById('btnPlayAudio').addEventListener('click', function() {
                 const text = resultText.value;
                 const lang = document.getElementById('targetLang').value;
                 if (!text.trim()) return;
-                new Audio(`/tts?text=${{encodeURIComponent(text)}}&lang=${{lang}}`).play();
-            }});
+                new Audio(`/tts?text=${encodeURIComponent(text)}&lang=${lang}`).play();
+            });
 
-            document.getElementById('btnPlaySourceAudio').addEventListener('click', function() {{
+            document.getElementById('btnPlaySourceAudio').addEventListener('click', function() {
                 const text = sourceText.value;
                 const lang = document.getElementById('sourceLang').value;
                 if (!text.trim()) return;
-                new Audio(`/tts?text=${{encodeURIComponent(text)}}&lang=${{lang}}`).play();
-            }});
-        }});
+                new Audio(`/tts?text=${encodeURIComponent(text)}&lang=${lang}`).play();
+            });
+        });
     </script>
 </body>
 </html>"""
+
+    html_content = html_content.replace("__OPTIONS_SOURCE__", options_html)
+    html_content = html_content.replace("__OPTIONS_TARGET__", options_target)
+    
+    return HTMLResponse(content=html_content)
